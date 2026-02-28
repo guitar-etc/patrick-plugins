@@ -1,0 +1,21 @@
+{
+  "name": "patrick-plugins",
+  "description": "Personal Claude Code plugins by Patrick",
+  "owner": {
+    "name": "Patrick"
+  },
+  "plugins": [
+    {
+      "name": "review-ui",
+      "description": "Conversation viewer and live review system for Claude Code sessions. Serves a web UI for browsing conversations, annotating messages, and posting review comments that Claude picks up automatically.",
+      "source": "./plugins/review-ui",
+      "category": "productivity"
+    },
+    {
+      "name": "comment-mode",
+      "description": "Adds an inspector-style annotation layer to any single-page HTML application. When activated, users can click any UI element or highlight text to leave comments.",
+      "source": "./plugins/comment-mode",
+      "category": "productivity"
+    }
+  ]
+}
