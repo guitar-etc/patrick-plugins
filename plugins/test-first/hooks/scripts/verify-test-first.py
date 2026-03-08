@@ -13,73 +13,21 @@ Algorithm:
 8. Cache result keyed on requirements.yaml mtime + test dir mtime
 """
 
-import glob
 import json
 import os
-import re
 import sys
 
+# Add script directory to path for sibling imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib_test_first import (
+    is_code_file,
+    is_test_file,
+    get_requirements,
+    find_test_files,
+    get_covered_reqs,
+)
+
 FLAG_DIR = "/tmp/test-first-verified"
-
-CODE_EXTENSIONS = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".rs",
-    ".java", ".html", ".css", ".scss", ".vue", ".svelte",
-}
-
-TEST_PATTERNS = [
-    r"^test_",       # test_foo.py
-    r"_test\.",       # foo_test.py, foo_test.go
-    r"\.test\.",      # foo.test.js, foo.test.ts
-    r"\.spec\.",      # foo.spec.js, foo.spec.ts
-]
-
-
-def is_code_file(file_path):
-    """Check if file has a code extension."""
-    _, ext = os.path.splitext(file_path)
-    return ext.lower() in CODE_EXTENSIONS
-
-
-def is_test_file(file_path):
-    """Check if file matches test naming patterns."""
-    basename = os.path.basename(file_path)
-    return any(re.search(pat, basename) for pat in TEST_PATTERNS)
-
-
-def get_requirements(cwd):
-    """Parse requirements.yaml and return set of REQ-NNN IDs."""
-    path = os.path.join(cwd, "requirements.yaml")
-    if not os.path.exists(path):
-        return set()
-    with open(path) as f:
-        content = f.read()
-    return set(re.findall(r"id:\s*(REQ-\d+)", content))
-
-
-def find_test_files(cwd):
-    """Find all test files in the project."""
-    test_files = []
-    for ext in CODE_EXTENSIONS:
-        for path in glob.glob(os.path.join(cwd, "**", f"*{ext}"), recursive=True):
-            if is_test_file(path):
-                test_files.append(path)
-    return test_files
-
-
-def get_covered_reqs(test_files):
-    """Scan test files for # REQ-NNN or // REQ-NNN annotations."""
-    covered = set()
-    pattern = re.compile(r"[#/]+\s*REQ-\d+")
-    for path in test_files:
-        try:
-            with open(path) as f:
-                for line in f:
-                    matches = re.findall(r"REQ-\d+", line)
-                    if pattern.search(line):
-                        covered.update(matches)
-        except (OSError, UnicodeDecodeError):
-            continue
-    return covered
 
 
 def get_cache_key(cwd):

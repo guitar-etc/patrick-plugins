@@ -1,6 +1,6 @@
 ---
 name: uat-capture
-description: Capture and track user-reviewed requirements for TDD traceability. Evaluates every user message for requirement changes and maintains requirements.yaml. Triggered automatically via hooks.
+description: This skill should be invoked to capture and track user-reviewed requirements for TDD traceability. It evaluates every user message for requirement changes and maintains requirements.yaml. This skill should be used when the user submits a prompt that may contain new features, bug reports, requirement modifications, or requirement deletions. Also invoked after plan approval to optionally capture plan deliverables as requirements.
 user-invocable: false
 ---
 
@@ -25,11 +25,11 @@ Evaluate the user's message against these criteria:
 - Gives implementation guidance without new requirements ("use React for this")
 - Reviews or approves plans without adding new requirements
 
-When in doubt, lean toward capturing. A requirement can always be removed later, but a missed requirement breaks traceability.
+When in doubt, capture the requirement. A requirement can always be removed later, but a missed requirement breaks traceability.
 
 ## Capture Workflow
 
-Follow these steps for every user message:
+Follow these steps for every user message. See `references/requirement-format.md` for the full YAML schema.
 
 1. Read `requirements.yaml` in the current working directory. If the file does not exist, start with an empty requirements list.
 2. Determine the next sequential ID. If requirements exist, increment from the highest REQ-NNN. If none exist, start with REQ-001.
@@ -70,7 +70,7 @@ When a plan is approved without explicit review, log it to `approveds.md` in the
 ```markdown
 ## Approved Without Review
 
-- **Date**: 2026-03-09 KST
+- **Date**: [current date] KST
 - **Context**: [Brief description of the plan]
 - **Reason**: Approved without detailed review
 ```
@@ -104,22 +104,9 @@ Place the "Requirements Update: " paragraph early in your response, before any c
 
 ## Invocation Logging
 
-Log every invocation to `requirements-log.jsonl` in the current working directory. Each line is a JSON object:
+Log every invocation to `requirements-log.jsonl` in the current working directory as a single JSON line. Use sequential `inv-NNN` IDs. Record the action (`add`, `modify`, `delete`, `none`) and affected REQ IDs. If multiple actions occur, use the most significant: add > modify > delete > none.
 
-```json
-{"id": "inv-001", "timestamp": "2026-03-09T14:30:00+09:00", "action": "add", "reqs": ["REQ-003"]}
-{"id": "inv-002", "timestamp": "2026-03-09T14:35:00+09:00", "action": "none", "reqs": []}
-{"id": "inv-003", "timestamp": "2026-03-09T14:40:00+09:00", "action": "modify", "reqs": ["REQ-001"]}
-{"id": "inv-004", "timestamp": "2026-03-09T14:45:00+09:00", "action": "delete", "reqs": ["REQ-002"]}
-```
-
-Fields:
-- `id`: Sequential invocation ID (`inv-NNN`), incrementing from the last entry in the log
-- `timestamp`: ISO 8601 with KST timezone offset
-- `action`: One of `add`, `modify`, `delete`, `none`
-- `reqs`: Array of REQ-NNN IDs affected (empty array for `none`)
-
-If multiple actions occur in one invocation (e.g., add and modify), use the most significant action: `add` > `modify` > `delete` > `none`.
+See `references/requirement-format.md` for the full JSONL schema and examples.
 
 ## Reference
 

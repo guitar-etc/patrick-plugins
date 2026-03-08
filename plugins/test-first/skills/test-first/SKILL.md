@@ -1,6 +1,6 @@
 ---
 name: test-first
-description: Enforce TDD red-green workflow for requirements. Write failing tests before implementation code. Annotate tests with REQ-NNN comments for traceability. Triggered automatically via hooks.
+description: This skill enforces TDD red-green workflow for requirements. It instructs the agent to write failing tests before implementation code and annotate tests with REQ-NNN comments for traceability. Invoked automatically when requirements.yaml changes or when implementation code is written before tests exist.
 user-invocable: false
 ---
 
@@ -39,6 +39,32 @@ The annotation must appear on the line immediately before the test function defi
 
 Multiple requirements can share a test, and one requirement can have multiple tests. The annotation links them for traceability.
 
+## Test File Naming
+
+Test files must follow recognized naming patterns so the verification hooks can discover them:
+
+- `test_*.py` (e.g., `test_auth.py`)
+- `*_test.py`, `*_test.go` (e.g., `auth_test.py`)
+- `*.test.js`, `*.test.ts` (e.g., `auth.test.ts`)
+- `*.spec.js`, `*.spec.ts` (e.g., `auth.spec.ts`)
+
+Files not matching these patterns will not be scanned for `# REQ-NNN` annotations.
+
+## Requirements File Format
+
+The `requirements.yaml` file uses this structure:
+
+```yaml
+requirements:
+  - id: REQ-001
+    prompt: "the verbatim user prompt"
+    rephrase: "the verbatim rephrase"
+    status: reviewed
+    tests: []
+```
+
+Each entry must have an `id` field in `REQ-NNN` format. The verification hooks parse this file to determine which requirements need test coverage.
+
 ## Test Framework Selection
 
 Choose the test framework based on what is being tested:
@@ -52,7 +78,7 @@ Choose the test framework based on what is being tested:
 
 **Framework priority**: pytest > Playwright > instruction markdown
 
-Prefer deterministic frameworks (pytest, Playwright) over instruction markdown. Instruction markdown is a fallback for things that are genuinely hard to automate — not a default.
+Prefer deterministic frameworks (pytest, Playwright) over instruction markdown. Instruction markdown is a `.md` file containing step-by-step instructions for Claude to execute manually as a test (e.g., "Open the app, click Login, verify the form appears"). Use it only for things that are genuinely hard to automate — not as a default.
 
 For JavaScript/TypeScript projects, use the project's existing test framework (Jest, Vitest, etc.) instead of pytest.
 
@@ -112,4 +138,4 @@ Format each change as: `REQ-NNN test action (test_function_name)`
 
 Actions: `added`, `modified`, `removed`
 
-This output is informational — unlike "Requirements Update: ", it is not gated by a transcript-check hook. However, it maintains consistency with the requirements-capture plugin's pattern and helps the user track test coverage.
+This output is informational and not enforced by hooks. It helps the user track test coverage across the session.

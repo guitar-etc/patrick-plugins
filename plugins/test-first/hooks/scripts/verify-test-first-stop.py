@@ -2,51 +2,14 @@
 """Stop hook: verify all requirements in requirements.yaml have test annotations.
 Blocks session stop if any requirement lacks coverage."""
 
-import glob
 import json
 import os
 import re
 import sys
 
-CODE_EXTENSIONS = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".rs",
-    ".java", ".html", ".css", ".scss", ".vue", ".svelte",
-}
-
-TEST_PATTERNS = [
-    r"^test_",
-    r"_test\.",
-    r"\.test\.",
-    r"\.spec\.",
-]
-
-
-def is_test_file(file_path):
-    basename = os.path.basename(file_path)
-    return any(re.search(pat, basename) for pat in TEST_PATTERNS)
-
-
-def find_test_files(cwd):
-    test_files = []
-    for ext in CODE_EXTENSIONS:
-        for path in glob.glob(os.path.join(cwd, "**", f"*{ext}"), recursive=True):
-            if is_test_file(path):
-                test_files.append(path)
-    return test_files
-
-
-def get_covered_reqs(test_files):
-    covered = set()
-    pattern = re.compile(r"[#/]+\s*REQ-\d+")
-    for path in test_files:
-        try:
-            with open(path) as f:
-                for line in f:
-                    if pattern.search(line):
-                        covered.update(re.findall(r"REQ-\d+", line))
-        except (OSError, UnicodeDecodeError):
-            continue
-    return covered
+# Add script directory to path for sibling imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib_test_first import find_test_files, get_covered_reqs
 
 
 def main():
