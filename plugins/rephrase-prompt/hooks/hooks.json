@@ -44,5 +44,16 @@
         }
       ]
     }
+  ],
+  "PreCompact": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo 'IMPORTANT: Keep all \"Rephrase: \" paragraphs exactly as-is during compaction. These are user-prompt interpretations that must be preserved verbatim to maintain intent across context resets.'",
+          "timeout": 5
+        }
+      ]
+    }
   ]
 }
