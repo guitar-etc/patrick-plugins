@@ -1,0 +1,9 @@
+{
+  "name": "rephrase-prompt",
+  "version": "0.1.0",
+  "description": "Ensures Claude rephrases every user prompt before responding. Uses a three-layer enforcement system: notification hook, rephrase skill, and verification blocker.",
+  "author": {
+    "name": "Patrick"
+  },
+  "keywords": ["rephrase", "prompt", "comprehension", "enforcement", "workflow"]
+}
