@@ -1,0 +1,9 @@
+{
+  "name": "requirements-capture",
+  "version": "0.1.0",
+  "description": "Enforces requirement capture from user prompts with Requirements Update verification",
+  "author": {
+    "name": "Patrick"
+  },
+  "keywords": ["requirements", "uat", "traceability", "enforcement"]
+}

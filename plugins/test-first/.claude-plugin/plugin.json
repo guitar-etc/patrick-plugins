@@ -1,0 +1,9 @@
+{
+  "name": "test-first",
+  "version": "0.1.0",
+  "description": "Enforces TDD red-green: blocks implementation code until all requirements have failing tests",
+  "author": {
+    "name": "Patrick"
+  },
+  "keywords": ["tdd", "test-first", "red-green", "enforcement", "testing"]
+}

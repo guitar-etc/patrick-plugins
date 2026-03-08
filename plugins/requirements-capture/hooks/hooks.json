@@ -1,0 +1,58 @@
+{
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo 'Invoke the uat-capture skill.'",
+          "timeout": 5
+        }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/verify-requirements-update.py\"",
+          "timeout": 10
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "AskUserQuestion",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo 'Invoke the uat-capture skill.'",
+          "timeout": 5
+        }
+      ]
+    },
+    {
+      "matcher": "ExitPlanMode",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo 'Tell the user: If you reviewed this plan sufficiently, say /uat-capture to capture its requirements. Then proceed with implementing the plan immediately — do not wait for the user response.'",
+          "timeout": 5
+        }
+      ]
+    }
+  ],
+  "PostToolUseFailure": [
+    {
+      "matcher": "ExitPlanMode",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo 'Invoke the uat-capture skill.'",
+          "timeout": 5
+        }
+      ]
+    }
+  ]
+}
