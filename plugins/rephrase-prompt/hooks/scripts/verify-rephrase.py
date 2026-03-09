@@ -4,9 +4,25 @@ Caches the verified user message index to avoid re-parsing the transcript on eve
 
 import json
 import os
+import signal
 import sys
 
 FLAG_DIR = "/tmp/claude-rephrase"
+INTERNAL_TIMEOUT = 5  # seconds — must be less than hooks.json timeout (10)
+
+
+def deny(reason):
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason
+        }
+    }))
+    sys.exit(0)
+
+
+def on_timeout(signum, frame):
+    deny("verify-rephrase.py timed out reading transcript")
 
 
 def flag_path(session_id):
@@ -14,6 +30,9 @@ def flag_path(session_id):
 
 
 def main():
+    signal.signal(signal.SIGALRM, on_timeout)
+    signal.alarm(INTERNAL_TIMEOUT)
+
     hook_input = json.loads(sys.stdin.read())
 
     # Skip check inside subagents
@@ -78,21 +97,11 @@ def main():
         return
 
     # Missing rephrase — block
-    print(json.dumps({
-        "hookSpecificOutput": {
-            "permissionDecision": "deny",
-            "permissionDecisionReason": "Invoke /rephrase"
-        }
-    }))
+    deny("Invoke /rephrase")
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "permissionDecision": "deny",
-                "permissionDecisionReason": f"verify-rephrase.py errored: {type(e).__name__}: {e}"
-            }
-        }))
+        deny(f"verify-rephrase.py errored: {type(e).__name__}: {e}")

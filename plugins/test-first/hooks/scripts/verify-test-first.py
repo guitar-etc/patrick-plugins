@@ -15,6 +15,7 @@ Algorithm:
 
 import json
 import os
+import signal
 import sys
 
 # Add script directory to path for sibling imports
@@ -28,6 +29,21 @@ from lib_test_first import (
 )
 
 FLAG_DIR = "/tmp/test-first-verified"
+INTERNAL_TIMEOUT = 5  # seconds — must be less than hooks.json timeout (10)
+
+
+def deny(reason):
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason
+        }
+    }))
+    sys.exit(0)
+
+
+def on_timeout(signum, frame):
+    deny("verify-test-first.py timed out")
 
 
 def get_cache_key(cwd):
@@ -48,6 +64,9 @@ def flag_path(session_id):
 
 
 def main():
+    signal.signal(signal.SIGALRM, on_timeout)
+    signal.alarm(INTERNAL_TIMEOUT)
+
     hook_input = json.loads(sys.stdin.read())
 
     # Subagent bypass
@@ -101,16 +120,10 @@ def main():
     missing = all_reqs - covered_reqs
     if missing:
         missing_sorted = sorted(missing)
-        reason = (
+        deny(
             f"Write tests for {', '.join(missing_sorted)} before implementing. "
             f"Invoke the test-first skill."
         )
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason
-            }
-        }))
         return
 
     # All covered — cache result
@@ -123,9 +136,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "permissionDecision": "deny",
-                "permissionDecisionReason": f"verify-test-first.py errored: {type(e).__name__}: {e}"
-            }
-        }))
+        deny(f"verify-test-first.py errored: {type(e).__name__}: {e}")

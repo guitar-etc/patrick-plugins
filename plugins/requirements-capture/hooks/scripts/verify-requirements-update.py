@@ -6,9 +6,25 @@ Caches the verified user message index to avoid re-parsing the transcript on eve
 import json
 import os
 import re
+import signal
 import sys
 
 FLAG_DIR = "/tmp/requirements-capture"
+INTERNAL_TIMEOUT = 5  # seconds — must be less than hooks.json timeout (10)
+
+
+def deny(reason):
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason
+        }
+    }))
+    sys.exit(0)
+
+
+def on_timeout(signum, frame):
+    deny("verify-requirements-update.py timed out reading transcript")
 
 
 def flag_path(session_id):
@@ -59,6 +75,9 @@ def cross_check(updates, reqs_set):
 
 
 def main():
+    signal.signal(signal.SIGALRM, on_timeout)
+    signal.alarm(INTERNAL_TIMEOUT)
+
     hook_input = json.loads(sys.stdin.read())
 
     # Skip check inside subagents
@@ -116,25 +135,13 @@ def main():
             text += block.get("text", "")
 
     if "Requirements Update: " not in text and "Requirements Update:" not in text:
-        # Missing requirements update — block
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "permissionDecision": "deny",
-                "permissionDecisionReason": "Invoke the uat-capture skill."
-            }
-        }))
+        deny("Invoke the uat-capture skill.")
         return
 
     # Two-step verification: cross-check stated updates against requirements.yaml
     updates = parse_update_line(text)
     if updates is None:
-        # Could not parse the update line
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "permissionDecision": "deny",
-                "permissionDecisionReason": "Invoke the uat-capture skill. The Requirements Update line could not be parsed."
-            }
-        }))
+        deny("Invoke the uat-capture skill. The Requirements Update line could not be parsed.")
         return
 
     if updates:  # Non-empty means actual changes were claimed
@@ -142,13 +149,7 @@ def main():
         reqs_set = parse_requirements_yaml(cwd)
         errors = cross_check(updates, reqs_set)
         if errors:
-            reason = "Requirements Update cross-check failed: " + "; ".join(errors)
-            print(json.dumps({
-                "hookSpecificOutput": {
-                    "permissionDecision": "deny",
-                    "permissionDecisionReason": reason
-                }
-            }))
+            deny("Requirements Update cross-check failed: " + "; ".join(errors))
             return
 
     # Verified — cache so we skip on subsequent tool calls this turn
@@ -161,9 +162,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "permissionDecision": "deny",
-                "permissionDecisionReason": f"verify-requirements-update.py errored: {type(e).__name__}: {e}"
-            }
-        }))
+        deny(f"verify-requirements-update.py errored: {type(e).__name__}: {e}")
