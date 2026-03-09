@@ -87,4 +87,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(json.dumps({
+            "hookSpecificOutput": {
+                "permissionDecision": "deny",
+                "permissionDecisionReason": f"verify-rephrase.py errored: {type(e).__name__}: {e}"
+            }
+        }))
