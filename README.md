@@ -1,10 +1,12 @@
 # rephrase-prompt
 
-A Claude Code plugin that rephrases every user prompt before responding. This reduces misunderstandings from ambiguous natural language and gives you a chance to correct Claude's interpretation before it acts.
+LLMs often misinterpret natural language — a vague "fix that" or "add tests for it" can send Claude down the wrong path, wasting time and context window. This plugin forces Claude to prove it understood you before it does anything.
+
+Every response starts with a `Rephrase:` line — Claude's interpretation of what you asked, written in plain language. If the rephrase is wrong, you correct it. If it's right, Claude proceeds. No more guessing whether the LLM got it.
 
 ## How it works
 
-Every time you send a message, Claude prepends a `Rephrase:` line showing how it understood your request:
+On every message you send, Claude prepends a rephrase showing how it understood your request:
 
 ```
 Rephrase: I want you to refactor the auth module and add unit tests for JWT validation.
@@ -14,11 +16,15 @@ Rephrase: I want you to refactor the auth module and add unit tests for JWT vali
 
 The rephrase is self-contained — it weaves in conversation context so it makes sense even if copied to a new session.
 
-### Three-layer enforcement
+### Five-hook enforcement
 
-1. **UserPromptSubmit hook** — reminds Claude to rephrase on every prompt
-2. **PreToolUse verification** — blocks tool calls if Claude forgot to rephrase
-3. **PreCompact hook** — preserves rephrases during context compaction
+| Hook | Purpose |
+|---|---|
+| **UserPromptSubmit** | Reminds Claude to rephrase on every prompt |
+| **PreToolUse** | Blocks tool calls if Claude forgot to rephrase |
+| **PostToolUse** | Re-triggers rephrase after `AskUserQuestion` or `EnterPlanMode` |
+| **PostToolUseFailure** | Re-triggers rephrase after rejected `ExitPlanMode` |
+| **PreCompact** | Preserves rephrase paragraphs during context compaction |
 
 ## Install
 
